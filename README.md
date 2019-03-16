@@ -14,11 +14,11 @@ operating system required: Windows - any(mac & linux might not be supported at t
 
 this game has only 4 control buttons: 
 
-"escape' key(esc) : to exit/quit the game at any time, 
+"escape' key(esc)   : to exit/quit the game at any time, 
 
-"W" key(w) : to move the box/paddle upward, 
+"W" key(w)          : to move the box/paddle upward, 
 
-"S" key(s) : to move the box/paddle downward & 
+"S" key(s)          : to move the box/paddle downward & 
 
 "enter" key(return) : to start the game
 
