@@ -1,11 +1,8 @@
 --[[
-    GD50 2018
-    Pong Remake
-
     -- Main Program --
 
-    Author: Colton Ogden
-    cogden@cs50.harvard.edu
+    Author: Abhinav Lakhani
+    akshu3398@gmail.com
 
     Originally programmed by Atari in 1972. Features two
     paddles, controlled by players, with the goal of getting
@@ -39,6 +36,8 @@ require 'Paddle'
 -- but which will mechanically function very differently
 require 'Ball'
 
+require 'math'
+
 -- size of our actual window
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -49,9 +48,6 @@ VIRTUAL_HEIGHT = 243
 
 -- paddle movement speed
 PADDLE_SPEED = 200
-
--- flag for 2nd player to be auto played or not
-player_2_auto = true
 
 --[[
     Called just once at the beginning of the game; used to set up
@@ -88,8 +84,7 @@ function love.load()
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
         resizable = true,
-        vsync = true,
-        canvas = false
+        vsync = true
     })
 
     -- initialize our player paddles; make them global so that they can be
@@ -194,7 +189,7 @@ function love.update(dt)
             sounds['wall_hit']:play()
         end
 
-        -- if we reach the left or right edge of the screen, go back to serve
+        -- if we reach the left edge of the screen, go back to serve
         -- and update the score and serving player
         if ball.x < 0 then
             servingPlayer = 1
@@ -213,16 +208,21 @@ function love.update(dt)
             end
         end
 
+        -- if we reach the right edge of the screen, go back to serve
+        -- and update the score and serving player
         if ball.x > VIRTUAL_WIDTH then
             servingPlayer = 2
             player1Score = player1Score + 1
             sounds['score']:play()
 
+            -- if we've reached a score of 10, the game is over; set the
+            -- state to done so we can show the victory message
             if player1Score == 10 then
                 winningPlayer = 1
                 gameState = 'done'
             else
                 gameState = 'serve'
+                -- places the ball in the middle of the screen, no velocity
                 ball:reset()
             end
         end
@@ -240,24 +240,14 @@ function love.update(dt)
         player1.dy = 0
     end
 
-    -- player 2    
-    if player_2_auto then
-        if (player2.y - ball.y) > 2 then
-            player2.dy = -PADDLE_SPEED
-        elseif (player2.y - ball.y) < -2 then
-            player2.dy = PADDLE_SPEED
-        else
-            player2.dy = 0
-        end
+    -- player 2
+    if (player2.y - ball.y) > 2 then
+        player2.dy = -PADDLE_SPEED
+    elseif (player2.y - ball.y) < -2 then
+        player2.dy = PADDLE_SPEED
     else
-        if love.keyboard.isDown('up') then
-            player2.dy = -PADDLE_SPEED
-        elseif love.keyboard.isDown('down') then
-            player2.dy = PADDLE_SPEED
-        else
-            player2.dy = 0
-        end
-    end    
+        player2.dy = 0
+    end
 
     -- update our ball based on its DX and DY only if we're in play state;
     -- scale the velocity by dt so movement is framerate-independent
@@ -285,7 +275,7 @@ function love.keypressed(key)
     elseif key == 'enter' or key == 'return' then
         if gameState == 'start' then
             gameState = 'serve'
-        elseif gameState == 'serve' then            
+        elseif gameState == 'serve' then
             gameState = 'play'
         elseif gameState == 'done' then
             -- game is simply in a restart phase here, but will set the serving
@@ -305,13 +295,6 @@ function love.keypressed(key)
                 servingPlayer = 1
             end
         end
-    elseif key == 'p' and gameState == 'serve' then
-        if player_2_auto then
-            player_2_auto = false
-        else
-            player_2_auto = true
-        end
-        
     end
 end
 
@@ -321,23 +304,22 @@ end
 ]]
 function love.draw()
     -- begin drawing with push, in our virtual resolution
-    push:start()
+    push:apply('start')
 
-    -- love.graphics.clear(40, 45, 52, 255)
+    -- love.graphics.clear(40, 45, 52, 255) -- old version
     
     -- render different things depending on which part of the game we're in
     if gameState == 'start' then
         -- UI messages
         love.graphics.setFont(smallFont)
         love.graphics.printf('Welcome to Pong!', 0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to begin!', 0, 20, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Press Enter to begin!', 0, 20, VIRTUAL_WIDTH, 'center')        
     elseif gameState == 'serve' then
         -- UI messages
         love.graphics.setFont(smallFont)
         love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 
             0, 10, VIRTUAL_WIDTH, 'center')
         love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press P to toggle player 2 to auto or mannual', 0, 30, VIRTUAL_WIDTH, 'center')
     elseif gameState == 'play' then
         -- no UI messages to display in play
     elseif gameState == 'done' then
@@ -360,7 +342,7 @@ function love.draw()
     displayFPS()
 
     -- end our drawing to push
-    push:finish()
+    push:apply('end')
 end
 
 --[[
@@ -383,5 +365,4 @@ function displayFPS()
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0, 255, 0, 255)
     love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
-    love.graphics.setColor(255, 255, 255, 255)
 end
