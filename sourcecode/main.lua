@@ -95,7 +95,7 @@ function love.load()
     -- initialize our player paddles; make them global so that they can be
     -- detected by other functions and modules
     player1 = Paddle(10, 30, 5, 20)
-    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
+    player2 = Paddle(VIRTUAL_WIDTH - 15, VIRTUAL_HEIGHT - 30, 5, 20)
 
     -- place a ball in the middle of the screen
     ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
@@ -143,38 +143,17 @@ function love.update(dt)
         -- before switching to play, initialize ball's velocity based
         -- on player who last scored
         ball.dy = math.random(-50, 50)
-        if servingPlayer == 1 then
-            ball.dx = math.random(140, 200)
-        else
-            ball.dx = -math.random(140, 200)
-        end
+        ball.dx = servingPlayer == 1 and math.random(140, 200) or -math.random(140, 200)
     elseif gameState == 'play' then
         -- detect ball collision with paddles, reversing dx if true and
         -- slightly increasing it, then altering the dy based on the position
         -- at which it collided, then playing a sound effect
-        if ball:collides(player1) then
+        if ball:collides(player1) or ball:collides(player2) then
             ball.dx = -ball.dx * 1.03
-            ball.x = player1.x + 5
+            ball.x = ball:collides(player1) and player1.x + 5 or player2.x - 4
 
             -- keep velocity going in the same direction, but randomize it
-            if ball.dy < 0 then
-                ball.dy = -math.random(10, 150)
-            else
-                ball.dy = math.random(10, 150)
-            end
-
-            sounds['paddle_hit']:play()
-        end
-        if ball:collides(player2) then
-            ball.dx = -ball.dx * 1.03
-            ball.x = player2.x - 4
-
-            -- keep velocity going in the same direction, but randomize it
-            if ball.dy < 0 then
-                ball.dy = -math.random(10, 150)
-            else
-                ball.dy = math.random(10, 150)
-            end
+            ball.dy = ball.dy < 0 and -math.random(10, 150) or math.random(10, 150)
 
             sounds['paddle_hit']:play()
         end
@@ -232,31 +211,13 @@ function love.update(dt)
     -- paddles can move no matter what state we're in
     --
     -- player 1
-    if love.keyboard.isDown('w') then
-        player1.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('s') then
-        player1.dy = PADDLE_SPEED
-    else
-        player1.dy = 0
-    end
+    player1.dy = love.keyboard.isDown('w') and -PADDLE_SPEED or love.keyboard.isDown('s') and PADDLE_SPEED or 0
 
     -- player 2    
     if player_2_auto then
-        if (player2.y - ball.y) > 2 then
-            player2.dy = -PADDLE_SPEED
-        elseif (player2.y - ball.y) < -2 then
-            player2.dy = PADDLE_SPEED
-        else
-            player2.dy = 0
-        end
+        player2.dy = (player2.y - ball.y) > 2 and -PADDLE_SPEED or (player2.y - ball.y) < -2 and PADDLE_SPEED or 0
     else
-        if love.keyboard.isDown('up') then
-            player2.dy = -PADDLE_SPEED
-        elseif love.keyboard.isDown('down') then
-            player2.dy = PADDLE_SPEED
-        else
-            player2.dy = 0
-        end
+        player2.dy = love.keyboard.isDown('up') and -PADDLE_SPEED or love.keyboard.isDown('down') and PADDLE_SPEED or 0
     end    
 
     -- update our ball based on its DX and DY only if we're in play state;
@@ -306,12 +267,7 @@ function love.keypressed(key)
             end
         end
     elseif key == 'p' and gameState == 'serve' then
-        if player_2_auto then
-            player_2_auto = false
-        else
-            player_2_auto = true
-        end
-        
+        player_2_auto = not player_2_auto
     end
 end
 
@@ -323,7 +279,7 @@ function love.draw()
     -- begin drawing with push, in our virtual resolution
     push:start()
 
-    -- love.graphics.clear(40, 45, 52, 255)
+    love.graphics.clear(40/255, 45/255, 52/255, 255/255)
     
     -- render different things depending on which part of the game we're in
     if gameState == 'start' then
