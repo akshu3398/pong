@@ -215,7 +215,7 @@ function love.update(dt)
 
     -- player 2    
     if player_2_auto then
-        player2.dy = (player2.y - ball.y) > 2 and -PADDLE_SPEED or (player2.y - ball.y) < -2 and PADDLE_SPEED or 0
+        player2.dy = (player2.y - ball.y) > 2 and -(PADDLE_SPEED * (player1Score + 1)/10) or (player2.y - ball.y) < -2 and (PADDLE_SPEED * (player1Score + 1)/10) or 0
     else
         player2.dy = love.keyboard.isDown('up') and -PADDLE_SPEED or love.keyboard.isDown('down') and PADDLE_SPEED or 0
     end    
